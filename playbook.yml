@@ -1,0 +1,6 @@
+---
+- hosts: all
+  tasks:
+    - name: include provision role
+      include_role:
+        name: ./provision

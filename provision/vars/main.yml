@@ -1,0 +1,4 @@
+---
+packages_file: "packages.x86_64"
+  #os_desktop_enable: true
+  #os_auth_pw_max_age: 99999

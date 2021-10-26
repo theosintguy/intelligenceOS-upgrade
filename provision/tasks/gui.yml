@@ -1,0 +1,40 @@
+---
+- name: upgrade system
+  pacman:
+    upgrade: true
+    update_cache: true
+  become: true
+- name: remove virtualbox-guest-utils-nox
+  pacman:
+    name:
+      - "virtualbox-guest-utils-nox"
+    state: absent
+  become: true
+- name: install xorg-server, xfce4 and virtualbox-guest-utils
+  pacman:
+    name:
+      - "xorg-server"
+      - "xfce4"
+      - "virtualbox-guest-utils"
+    state: present
+  become: true
+- name: check if a display manager has been set up
+  stat:
+    path: /etc/systemd/system/display-manager.service
+  register: display_manager
+- name: make sure lightdm is present
+  pacman:
+    name:
+      - "lightdm"
+      - "lightdm-gtk-greeter"
+    state: present
+  become: true
+  when: display_manager.stat.exists == False
+- name: ensure lightdm is enabled
+  systemd:
+    daemon_reload: true
+    state: started
+    name: lightdm.service
+    enabled: true
+  become: true
+  when: display_manager.stat.exists == False

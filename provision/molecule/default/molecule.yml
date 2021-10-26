@@ -1,0 +1,32 @@
+---
+dependency:
+  name: galaxy
+  options:
+    requirements-file: requirements.yml
+driver:
+  name: vagrant
+platforms:
+  # add support for ubuntu variants
+  # add support for fedora
+  # add support for gentoo
+  - name: archlinux
+    box: archlinux/archlinux
+    memory: 16384
+    cpus: 8
+    config_options:
+      ssh.remote_user: vagrant
+  #- name: manjaro
+  #  box: Zelec/manjarolinux
+  #  config_options:
+  #    ssh.remote_user: vagrant
+provisioner:
+  name: ansible
+  config_options:
+    defaults:
+      callbacks_enabled: profile_tasks, timer, yaml
+verifier:
+  name: ansible
+lint: |
+  set -e
+  yamllint .
+  ansible-lint .

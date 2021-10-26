@@ -1,0 +1,39 @@
+---
+# This is an example playbook to execute Ansible tests.
+
+- name: Verify
+  hosts: all
+  gather_facts: true
+  vars:
+    packages_file: "../../files/packages.x86_64"
+  collections:
+    - kewlfft.aur
+  tasks:
+    #- name: check twint installation status
+    #  aur:
+    #    use: paru
+    #    name: twint-git
+    #    state: present
+    #  check_mode: true
+    #  register: pkg_status
+    #- name: verify that package is already installed
+    #  assert:
+    #    that:
+    #      - not pkg_status.changed
+    #- name: Debug results
+    #  debug:
+    #    var: pkg_status
+    - name: get facts on installed packages
+      package_facts:
+        manager: auto
+    - name: find missing packages
+      set_fact:
+        missing_packages: "{{ lookup('file', '{{ packages_file }}').splitlines() | difference(ansible_facts.packages.keys()) }}"
+          #- name: check that there are no missing packages
+          #  assert:
+          #    that:
+          #      - "{{ missing_packages | length == 0 }}"
+          #    fail_msg: "missing packages: {{ missing_packages }}"
+    - name: fetch os info
+      debug:
+        var: ansible_facts.keys()

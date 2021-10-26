@@ -1,0 +1,18 @@
+galaxy_info:
+  author: theosintguy
+  description: provision a vagrant box with intelligenceOS
+  company: fau
+  license: MIT
+  min_ansible_version: 2.1
+  # min_ansible_container_version:
+  platforms:
+    - name: ArchLinux
+      versions:
+        - all
+  galaxy_tags: []
+
+dependencies: []
+
+collections:
+  - kewlfft.aur
+    #- devsec.hardening

@@ -1,0 +1,103 @@
+---
+- name: check for systemd
+  include_tasks: systemd.yml
+- name: enable graphical user interface
+  include_tasks: gui.yml
+- name: upgrade system
+  pacman:
+    upgrade: true
+    update_cache: true
+  become: true
+- name: colorize pacman
+  lineinfile:
+    path: /etc/pacman.conf
+    regexp: "Color$"
+    line: "Color"
+  become: true
+- name: install basic packages (and rustup)
+  pacman:
+    name:
+      - "fakeroot"
+      - "git"
+      - "binutils"
+      - "base-devel"
+      - "python"
+      - "wget"
+      - "curl"
+      - "p7zip"
+      - "cmake"
+      - "rsync"
+      - "iptables"
+      - "firejail"
+      - "openssl"
+      - "rustup"
+    state: present
+  become: true
+- name: setup rust toolchain
+  command: rustup default stable
+- name: install paru as AUR helper
+  aur:
+    name: "paru-bin"
+    use: makepkg
+    state: latest
+- name: install packages
+  aur:
+    name: "{{ lookup('file', '{{ packages_file }}').splitlines() }}"
+    state: present
+    use: paru
+- name: update packages
+  aur:
+    use: paru
+    upgrade: true
+- name: Uninstall insecure packages
+  pacman:
+    name:
+      - rcp
+      - rlogin
+      - rsh
+    state: absent
+  become: true
+- name: Find cron files and directories
+  find:
+    paths:
+      - /etc
+    patterns:
+      - cron.hourly
+      - cron.daily
+      - cron.weekly
+      - cron.monthly
+      - cron.d
+      - crontab
+    file_type: any
+  register: cron_directories
+- name: Ensure correct permission on cron files and directories
+  file:
+    path: "{{ item.path }}"
+    owner: root
+    group: root
+    mode: og-rwx
+  with_items: "{{ cron_directories.files }}"
+#TODO: only allow root to use su
+#TODO: set umask to 0077 so newly created files can only be read by owner: umask 0077
+- name: ensure that wheel is able to use sudo with password
+  lineinfile:
+    path: /etc/sudoers
+    regexp: '^%wheel'
+    line: '%wheel ALL=(ALL) ALL'
+    validate: 'visudo -cf %s'
+  become: true
+- name: disallow root login
+  user:
+    name: root
+    password: '!'
+  become: true
+- name: enforce delay of 4s after a failed login attempt
+  lineinfile:
+    path: /etc/pam.d/system-login
+    regexp: '^auth optional pam_faildelay.so'
+    line: 'auth optional pam_faildelay.so delay=4000000'
+  become: true
+- name: disallow 'world' to read some files
+  command: "chmod 700 /boot /etc/iptables /etc/arptables"
+  ignore_errors: true
+  become: true
